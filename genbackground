@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+BACKGROUND="${1?Please give a color name as the first parameter}"
+
+ICONS=(telegram virt-manager redshift{-status-on,-status-off} si-syncthing{,-white,-black}{-idle,-warning,-unknown,-0,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11} albert-tray)
+
+OUTPUT=out
+
+
+for INPUT in /usr/share/icons images; do
+for icon in ${ICONS[@]}; do
+for image in $(find "${INPUT}" -type f -name "${icon}.*" -printf '%P\n'); do
+
+	IFS=/. read theme size icontype basename filetype <<< "${image}"
+	IFS=x  read size _ <<< "${size}"
+
+	infile="${INPUT}/${image}"
+	outfile="${OUTPUT}/${image}"
+
+	[ "${size}" != "scalable" ] || size=""
+
+	mkdir -p "$(dirname "${outfile}")"
+
+	(
+	convert \
+		-background "${BACKGROUND}" \
+		-alpha remove \
+		${size:+-size "${size}x${size}"} \
+		${size:+-resize "${size}x${size}"} \
+		"${infile}" \
+		"${outfile/svg/png}"
+	printf "Finished: %s\n" "${image}"
+	) &
+done
+done
+done
+
+wait
